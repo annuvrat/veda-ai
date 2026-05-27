@@ -33,8 +33,61 @@ export const createAssignment = async (req: Request, res: Response) => {
 export const getUserAssignments = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;
-    const assignments = await UserAssignments(userId as string)
-    return ApiResponse.ok(assignments, "Assignments fetched successfully").send(res);
+    const { search, status, page = 1, limit = 6 } = req.query;
+
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build Mongo query filter object
+    const filterQuery: any = { createdBy: userId };
+
+    // Search matches assignment titles (case-insensitive)
+    if (search) {
+      filterQuery.title = { $regex: search, $options: "i" };
+    }
+
+    // Status matching e.g. draft, queued, generating, completed, failed
+    if (status && status !== "all") {
+      filterQuery.status = status;
+    }
+
+    // Query assignments and total count
+    const assignments = await Assignment.find(filterQuery)
+      .populate("generatedPaperId")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    const totalCount = await Assignment.countDocuments(filterQuery);
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    return ApiResponse.ok(
+      {
+        assignments,
+        pagination: {
+          totalCount,
+          totalPages,
+          currentPage: pageNum,
+          limit: limitNum,
+        },
+      },
+      "Assignments fetched successfully"
+    ).send(res);
+  } catch (error: any) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const deleteAssignment = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const assignment = await Assignment.findByIdAndDelete(id);
+    if (!assignment) {
+      throw ApiError.notFound("Assignment not found");
+    }
+    return ApiResponse.ok(null, "Assignment deleted successfully").send(res);
   } catch (error: any) {
     console.error(error);
     throw error;

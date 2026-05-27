@@ -1,7 +1,8 @@
 import { create } from "zustand";
 
 interface Assignment {
-  id: string;
+  id?: string;
+  _id?: string;
   title: string;
   dueDate: string;
   instructions: string;
