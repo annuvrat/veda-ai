@@ -32,7 +32,7 @@ export default function Page() {
   return (
     <div className="flex min-h-screen bg-[#F3F4F6] p-4 gap-6 font-sans">
       {/* -------------------- LEFT SIDEBAR -------------------- */}
-      <aside className="w-72 bg-white rounded-3xl shadow-xs border border-zinc-100 flex flex-col justify-between p-6 shrink-0">
+      <aside className="w-82 bg-white rounded-3xl shadow-xs border border-zinc-100 flex flex-col justify-between p-6 shrink-0">
         <div className="flex flex-col gap-8">
           {/* Logo Section */}
           <div className="flex items-center -ml-5 -gap- select-none">
@@ -50,19 +50,19 @@ export default function Page() {
           </div>
 
           {/* Create Assignment Button */}
-          <div className="w-full rounded-full p-[1.5px] bg-gradient-to-t from-[#C0350A] to-[#FF7950] shadow-sm hover:shadow-md transition-all duration-200">
+          <div className="w-full rounded-full p-[3.5px] bg-gradient-to-t from-[#C0350A] to-[#FF7950] shadow-sm hover:shadow-md transition-all duration-200">
             <button
               onClick={() => setCreateModalOpen(true)}
               className="w-full bg-[#1E1E1E] text-white py-3 px-5 rounded-full font-medium flex items-center justify-center gap-2.5 hover:bg-[#252525] active:scale-98 transition-all duration-200 group relative overflow-hidden"
             >
               <Sparkles className="w-4 h-4 text-white fill-white group-hover:animate-pulse" />
-              <span className="text-[15px]">Create Assignment</span>
+              <span className="text-[18px]">Create Assignment</span>
               <span className="absolute inset-0 w-full h-full bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></span>
             </button>
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex flex-col gap-1.5">
+          <nav className="mt-8 flex flex-col gap-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -70,14 +70,14 @@ export default function Page() {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-4 py-3 px-4 rounded-xl text-left text-[14px] font-medium transition-all duration-200 ${
+                  className={`w-full flex items-center gap-4 py-3 px-4 rounded-xl text-left text-[16px] font-medium transition-all duration-200 ${
                     isActive
                       ? "bg-[#EFEFEF] text-zinc-900 shadow-2xs font-semibold"
                       : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
                   }`}
                 >
                   <Icon
-                    className={`w-4 h-4 transition-transform duration-200 ${
+                    className={`w-5 h-5 transition-transform duration-200 ${
                       isActive ? "text-zinc-900 scale-110" : "text-zinc-400"
                     }`}
                   />
@@ -92,14 +92,14 @@ export default function Page() {
         <div className="flex flex-col gap-4">
           <button
             onClick={() => setActiveTab("Settings")}
-            className="flex items-center gap-4 py-2.5 px-4 rounded-xl text-[14px] font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 transition-all duration-200 text-left w-full"
+            className="flex items-center gap-4 py-2.5 px-4 rounded-xl text-[17px] font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 transition-all duration-200 text-left w-full"
           >
-            <Settings className="w-4 h-4 text-zinc-400" />
+            <Settings className="w-7 h-7 text-zinc-400" />
             Settings
           </button>
 
           <div className="bg-[#EFEFEF] p-4 rounded-2xl flex items-center gap-3.5 border border-zinc-100/50 hover:shadow-xs transition-shadow duration-200">
-            <div className="w-11 h-11 rounded-full bg-[#fcd34d] overflow-hidden flex items-center justify-center border-2 border-white shadow-xs shrink-0">
+            <div className="w-14 h-14 rounded-full bg-[#fcd34d] overflow-hidden flex items-center justify-center border-2 border-white shadow-xs shrink-0">
               <img
                 src="https://api.dicebear.com/7.x/bottts/svg?seed=dps"
                 alt="School logo"
@@ -107,10 +107,10 @@ export default function Page() {
               />
             </div>
             <div className="flex flex-col overflow-hidden">
-              <span className="text-[13.5px] font-bold text-zinc-800 truncate leading-tight">
+              <span className="text-[15px] font-bold text-zinc-800 truncate leading-tight">
                 Delhi Public School
               </span>
-              <span className="text-[11px] text-zinc-500 truncate leading-none mt-0.5">
+              <span className="text-[14px] text-zinc-500 truncate leading-none mt-0.5">
                 Bokaro Steel City
               </span>
             </div>
@@ -124,12 +124,12 @@ export default function Page() {
         <header className="bg-white rounded-2xl border border-zinc-100/50 p-4 flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-3.5">
             <button className="p-2 hover:bg-zinc-50 rounded-lg active:scale-95 transition-all text-zinc-600">
-              <ArrowLeft className="w-4.5 h-4.5" />
+              <ArrowLeft className="w-8 h-8" />
             </button>
             <div className="h-5 w-[1px] bg-zinc-200"></div>
             <div className="flex items-center gap-2">
               <LayoutGrid className="w-4.5 h-4.5 text-zinc-400" />
-              <span className="text-[14px] font-semibold text-zinc-500">
+              <span className="text-[18px] font-semibold text-zinc-400">
                 Assignment
               </span>
             </div>
@@ -137,7 +137,7 @@ export default function Page() {
 
           <div className="flex items-center gap-5">
             <button className="relative p-2 hover:bg-zinc-50 rounded-full text-zinc-600 active:scale-95 transition-all">
-              <Bell className="w-5 h-5" />
+              <Bell className="w-7 h-7" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#e04f2f] rounded-full ring-2 ring-white"></span>
             </button>
 
@@ -146,15 +146,15 @@ export default function Page() {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="flex items-center gap-3 hover:bg-zinc-50 py-1.5 px-3 rounded-full transition-all duration-200 text-left active:scale-98"
               >
-                <div className="w-8 h-8 rounded-full bg-[#f87171] overflow-hidden flex items-center justify-center border border-zinc-200 shadow-xs">
+                <div className="w-10 h-10 rounded-full bg-[#f87171] overflow-hidden flex items-center justify-center border border-zinc-200 shadow-xs">
                   <img
                     src="https://api.dicebear.com/7.x/adventurer/svg?seed=john"
                     alt="User profile"
-                    className="w-7 h-7"
+                    className="w-10 h-10"
                   />
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[14px] font-semibold text-zinc-700">
+                  <span className="text-[18px] font-semibold text-zinc-700">
                     John Doe
                   </span>
                   <ChevronDown
