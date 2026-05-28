@@ -207,7 +207,7 @@ Because the Express process delegates immediately and returns, its event loop is
 Rather than asking clients to poll `GET /assignments/:id` every second — which would recreate connection pressure on the API — the worker emits granular Socket.IO events directly to the client's private room as generation progresses. The client sees logs, sections, and individual questions appear in real time without issuing a single additional HTTP request.
 
 **Blazing Fast Text-Only Generation**
-
+[![Fast](https://img.shields.io/badge/Text--Only-1--2s-22c55e?style=flat-square)](https://github.com)
 When generating assignments without images (pure text instructions only), the pipeline bypasses Gemini entirely and moves directly to Groq structured generation. In this fast path, complete papers stream back to the client in 1–2 seconds — no perceptible delay.
 
 ---
