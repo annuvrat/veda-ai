@@ -43,7 +43,8 @@ VedaAI is a production-grade full-stack platform that transforms raw reference m
 
 ## Architecture
 
-```┌─────────────────────────────────────────────────────────────────┐
+```
+┌─────────────────────────────────────────────────────────────────┐
 │                            CLIENT                                │
 │                    Next.js 16 · Zustand · Tailwind              │
 └───────────────────────────────┬─────────────────────────────────┘
