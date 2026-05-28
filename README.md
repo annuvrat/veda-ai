@@ -43,66 +43,53 @@ VedaAI is a production-grade full-stack platform that transforms raw reference m
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────┐
-│                   CLIENT TIER                    │
-│          Next.js 16 · Zustand · Tailwind         │
-│                                                  │
-│  ┌─────────────────────┐  ┌─────────────────┐   │
-│  │ Create Assignment   │  │ Live Exam Sheet │   │
-│  │ View                │  │ View            │   │
-└──┴──────────┬──────────┴──┴────────▲────────┴───┘
-              │ ① POST /api/assignments│ ⑦ stream events
-              │ ② join socket room     │
-              ▼                        │
-┌─────────────────────┐   ┌───────────┴──────────┐
-│   Express API       │   │      Socket.IO        │
-│   (REST endpoints)  │   │   (event emitter)     │
-└──────┬──────────────┘   └──────────▲────────────┘
-       │                             │ ⑥ emit progress
-       │ enqueue job                 │
-       ▼                             │
-┌─────────────────────┐             │
-│  BullMQ + Redis     │             │
-│  (async job queue)  │             │
-└──────┬──────────────┘             │
-       │ ③ job dequeued             │
-       ▼                             │
-┌──────────────────────────────────────────────────┐
-│                  WORKER TIER                     │
-│           Isolated BullMQ process                │
-│                                                  │
-│            ┌──────────────────┐                 │
-│            │   BullMQ Worker  │─────────────────┘
-│            │  Fetch · Parse · │
-│            │  Generate · Emit │
-│            └────────┬─────────┘
-└─────────────────────│────────────────────────────┘
-                      │
-          ┌───────────┴────────────┐
-          │ ④ OCR & distill        │ ⑤ structured gen
-          ▼                        ▼
-┌──────────────────┐    ┌──────────────────────┐
-│  Gemini 2.5      │    │  Groq Llama 3.3 70B  │
-│  Flash           │    │                      │
-│  (OCR · concept  │    │  (sections · MCQs ·  │
-│   extraction)    │    │   questions)         │
-└──────────────────┘    └──────────────────────┘
-          │                        │
-          └───────────┬────────────┘
-                      │ ⑧ save finalized paper
-                      ▼
-             ┌─────────────────┐
-             │    MongoDB      │
-             │   (Mongoose)    │
-             └─────────────────┘
+```┌─────────────────────────────────────────────────────────────────┐
+│                            CLIENT                                │
+│                    Next.js 16 · Zustand · Tailwind              │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │
+                ┌───────────────┼───────────────┐
+                │ ① POST        │ ② Socket.IO   │
+                │ /assignments  │   handshake   │
+                ▼               ▼               │
+┌───────────────────────────────────────────┐   │
+│              Express API Server           │   │
+│            (REST · CORS · Auth)           │   │
+└─────────────────────┬─────────────────────┘   │
+                      │                         │
+                      │ ③ Enqueue job           │
+                      ▼                         │
+              ┌───────────────┐                 │
+              │   BullMQ +    │                 │
+              │    Redis      │                 │
+              │  (Async Job   │                 │
+              │    Queue)     │                 │
+              └───────┬───────┘                 │
+                      │                         │
+                      │ ④ Dequeue               │
+                      ▼                         │
+              ┌───────────────┐                 │
+              │    Worker     │                 │
+              │   (BullMQ)    │─────────────────┘
+              └───────┬───────┘   ⑤ Emit events
+                      │              (real-time)
+        ┌─────────────┼─────────────┐
+        │             │             │
+        ▼             ▼             ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│   Gemini     │ │    Groq      │ │   MongoDB    │
+│ 2.5 Flash    │ │ Llama 3.3    │ │ (Mongoose)   │
+│              │ │   70B        │ │              │
+│ • OCR        │ │ • Sections   │ │ • Store      │
+│ • Extract    │ │ • Questions  │ │   paper      │
+└──────────────┘ └──────────────┘ └──────────────┘
 ```
 ---
 ## Design Approach — Async Worker Architecture
 
 ### The Problem: Long-Running AI Inference Blocks Everything
 
-Generating a question paper is not instant. Between multimodal OCR on uploaded textbooks, two rounds of LLM inference across Gemini and Groq, and iterative per-section question generation, a single job can take **10–30 seconds** end to end.
+Generating a question paper is not instant ,two rounds of LLM inference across Gemini and Groq, and iterative per-section question generation, a single job can take **10–30 seconds** end to end.
 
 If this ran synchronously inside a request handler, the consequences would be severe:
 
@@ -114,21 +101,47 @@ If this ran synchronously inside a request handler, the consequences would be se
 ---
 
 ### The Solution: Decouple Immediately, Process Asynchronously
-Client request            Worker picks up job
-│                           │
-▼                           ▼
-┌──────────┐   job ID    ┌──────────────┐    LLM calls    ┌──────────┐
-│   API    │ ──────────▶ │    Queue     │ ──────────────▶ │  Worker  │
-│          │             │  (Redis)     │                 │          │
-└──────────┘             └──────────────┘                 └──────────┘
-│                                                          │
-│  202 Accepted                                     real-time events
-│  { jobId, status: "queued" }                      via Socket.IO
-▼                                                          │
-Client navigates                                               ▼
-to /generating/:id ◀──────────────────────────────────── Live stream
-and opens socket
+┌─────────┐                    ┌─────────┐                    ┌─────────┐
+│ Client  │                    │   API   │                    │ Queue   │
+└────┬────┘                    └────┬────┘                    │ (Redis) │
+     │                              │                         └────┬────┘
+     │  POST /assignments           │                              │
+     │─────────────────────────────▶│                              │
+     │                              │                              │
+     │                              │  Enqueue job                 │
+     │                              │─────────────────────────────▶│
+     │                              │                              │
+     │  202 Accepted                │                              │
+     │  { jobId, status: "queued" }│                              │
+     │◀─────────────────────────────│                              │
+     │                              │                              │
+     │  Join Socket.IO room         │                              │
+     │─────────────────────────────▶│                              │
+     │                              │                              │
+     │                              │                         ┌────┴────┐
+     │                              │                         │ Worker │
+     │                              │                         └────┬────┘
+     │                              │  Dequeue job                 │
+     │                              │◀─────────────────────────────│
+     │                              │                              │
+     │                              │  LLM calls (Gemini + Groq)   │
+     │                              │─────────────────────────────▶│
+     │                              │                              │
+     │  Real-time events (SSE/WS)   │                              │
+     │◀─────────────────────────────│◀─────────────────────────────│
+     │  • "Processing..."           │                              │
+     │  • "Generated Section 1/3"   │                              │
+     │  • "Question 1/10"           │                              │
+     │                              │                              │
+     │  Final paper with questions  │                         ┌────┴────┐
+     │◀─────────────────────────────│                         │ MongoDB│
+     │                              │  Persist result         └────┬────┘
+     │                              │─────────────────────────────▶│
+     │                              │                              │
+     │                              │  Confirmation               │
+     │                              │◀─────────────────────────────│
 
+ ---
 The API does exactly two things on `POST /api/assignments`:
 
 1. Writes a **pending** document to MongoDB with a generated assignment ID
@@ -160,6 +173,9 @@ Because the Express process delegates immediately and returns, its event loop is
 
 Rather than asking clients to poll `GET /assignments/:id` every second — which would recreate connection pressure on the API — the worker emits granular Socket.IO events directly to the client's private room as generation progresses. The client sees logs, sections, and individual questions appear in real time without issuing a single additional HTTP request.
 
+### 4. Blazing Fast Text-Only Generation
+
+When generating assignments **without images** (pure text instructions only), the pipeline bypasses Gemini entirely and moves directly to Groq structured generation. In this fast path, complete papers stream back to the client in **1–2 seconds** — no perceptible delay.
 ---
 
 ### Trade-offs Acknowledged
