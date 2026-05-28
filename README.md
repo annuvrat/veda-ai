@@ -26,6 +26,8 @@ Generate CBSE/NCERT-compliant exam papers in seconds — powered by multimodal O
 
 VedaAI is a production-grade full-stack platform that transforms raw reference materials — textbook images, scanned PDFs, or open-ended teacher instructions — into fully structured, curriculum-compliant question papers. It couples multimodal OCR with structured LLM generation and an asynchronous task queue to deliver a fast, interactive, real-time streaming experience.
 
+**LIVE URL** : https://veda-ai.annuvrat.com
+
 ---
 
 ## ✨ Features
@@ -67,9 +69,7 @@ VedaAI is a production-grade full-stack platform that transforms raw reference m
 │                    (Auto SSL · Load Balancing · Rate Limiting)              │
 │                                                                              │
 │  • veda.annuvrat.com      → veda-backend:3001                               │
-│  • bookleaf.annuvrat.com  → bookleaf-backend:4000                           │
-│  • quiz.annuvrat.com      → backend:5000                                    │
-│  • tunnel.annuvrat.com    → tunnel-server:8080                              │
+│                            │
 └─────────────────────────────────┬───────────────────────────────────────────┘
                                   │
                                   │ Internal Docker Network
