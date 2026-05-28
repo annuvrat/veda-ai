@@ -332,7 +332,7 @@ export default function GeneratingPage() {
       {/* ==================== MAIN CONTENT ==================== */}
       <main className="flex-1 flex flex-col gap-4 relative h-[calc(100vh-2rem)] overflow-y-auto">
         {/* Header */}
-        <header className="bg-white rounded-2xl border border-zinc-100/50 p-4 flex items-center justify-between shadow-xs shrink-0">
+        <header className="bg-white rounded-2xl border border-zinc-100/50 p-2 flex items-center justify-between shadow-xs shrink-0">
           <div className="flex items-center gap-3.5">
             <button onClick={() => { resetGeneration(); router.push("/"); }} className="p-2 hover:bg-zinc-50 rounded-lg active:scale-95 transition-all text-zinc-600 cursor-pointer">
               <ArrowLeft className="w-8 h-8" />
@@ -352,7 +352,7 @@ export default function GeneratingPage() {
               <div className="w-10 h-10 rounded-full bg-[#f87171] overflow-hidden flex items-center justify-center border border-zinc-200">
                 <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=john" alt="User" className="w-10 h-10" />
               </div>
-              <span className="text-[18px] font-semibold text-zinc-700 select-none">John Doe</span>
+              <span className="text-[18px] font-semibold text-zinc-700 select-none">James Bond</span>
               <ChevronDown className="w-4 h-4 text-zinc-400" />
             </button>
           </div>
@@ -369,10 +369,10 @@ export default function GeneratingPage() {
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF7950]" />
               </span>
             )}
-            <span className="text-[13px] font-semibold text-zinc-400 truncate">
+            <span className="text-[13px] font-semibold text-zinc-800 truncate">
               {status === "failed" ? "Generation failed" : latestLogMessage}
             </span>
-            <span className="text-[13px] font-mono font-bold text-zinc-500 shrink-0">{progress}%</span>
+            <span className="text-[13px] font-mono font-bold text-zinc-800 shrink-0">{progress}%</span>
           </div>
         )}
 
@@ -381,7 +381,7 @@ export default function GeneratingPage() {
           <div className="bg-[#1E1E1E] text-white p-5 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md shrink-0">
             <div className="flex flex-col gap-1 leading-normal max-w-lg text-[14px] text-zinc-300">
               <span className="font-bold text-white text-[15px]" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>
-                Certainly, Lakshya! Here are customized Question Paper for your CBSE Grade 8 Science classes on the NCERT chapters:
+                Certainly, James! Here are customized Question Paper for your CBSE Grade 8 Science classes on the NCERT chapters:
               </span>
             </div>
             <button onClick={handleDownloadPDF} className="bg-white hover:bg-zinc-100 text-black px-6 py-2.5 rounded-full font-bold text-[14px] flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all select-none self-start sm:self-auto shrink-0">
@@ -406,7 +406,7 @@ export default function GeneratingPage() {
               Class: 5th
             </span>
 
-            <div className="w-full flex justify-between text-[13px] text-zinc-600 font-semibold mt-6 border-t border-zinc-100 pt-3">
+            <div className="w-full flex justify-between text-[16px] text-zinc-800 font-semibold mt-6 border-t border-zinc-100 pt-3">
               <span>Time Allowed: 45 minutes</span>
               <span>Maximum Marks: {assignment?.totalMarks || 20}</span>
             </div>
@@ -414,10 +414,10 @@ export default function GeneratingPage() {
 
           {/* Instructions row */}
           <div className="flex flex-col gap-1 border-b border-zinc-100 pb-4 select-none">
-            <span className="text-[13.5px] font-bold text-zinc-800">
+            <span className="text-[16px] font-bold text-zinc-800">
               All questions are compulsory unless stated otherwise.
             </span>
-            <div className="flex flex-col gap-1 text-[13px] text-zinc-600 mt-3 font-semibold">
+            <div className="flex flex-col gap-1 text-[16px] text-zinc-800 mt-3 font-semibold">
               <span>Name: ____________________</span>
               <span>Roll Number: ____________</span>
               <span>Class: 5th Section: ________</span>
@@ -426,7 +426,7 @@ export default function GeneratingPage() {
 
           {/* ---- Sections & Questions (streamed) ---- */}
           {sections.length === 0 && status !== "completed" && (
-            <div className="flex items-center gap-2 text-zinc-300 py-6 select-none">
+            <div className="flex items-center gap-2 text-zinc-400 py-6 select-none">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span className="text-[13px] font-semibold">Generating sections…</span>
             </div>
@@ -457,12 +457,12 @@ export default function GeneratingPage() {
                         const doneTyping = !isThisTyping;
 
                         return (
-                          <div key={qIdx} className="flex flex-col gap-1 text-[14px] text-zinc-700 leading-relaxed">
+                          <div key={qIdx} className="flex flex-col gap-1 text-[16px] text-zinc-700 leading-relaxed">
                             <div className="flex items-start gap-1.5">
                               <span className="font-bold shrink-0">{qIdx + 1}.</span>
                               <div className="flex-1">
                                 {q.difficulty && doneTyping && (
-                                  <span className="text-zinc-400 text-[12.5px] font-bold mr-1">[{q.difficulty.charAt(0).toUpperCase() + q.difficulty.slice(1)}]</span>
+                                  <span className="text-zinc-400 text-[14px] font-bold mr-1">[{q.difficulty.charAt(0).toUpperCase() + q.difficulty.slice(1)}]</span>
                                 )}
                                 <span>{q.question}</span>
                                 {/* Blinking cursor while typing */}
@@ -471,7 +471,7 @@ export default function GeneratingPage() {
                                 )}
                                 {/* Marks badge – only after done */}
                                 {q.marks && doneTyping && (
-                                  <span className="text-zinc-400 text-[13px] font-semibold ml-1">[{q.marks} Marks]</span>
+                                  <span className="text-zinc-400 text-[15px] font-semibold ml-1">[{q.marks} Marks]</span>
                                 )}
                               </div>
                             </div>
@@ -480,7 +480,7 @@ export default function GeneratingPage() {
                             {q.options && q.options.length > 0 && doneTyping && (
                               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pl-5 mt-1.5 select-none">
                                 {q.options.map((opt, optIdx) => (
-                                  <div key={optIdx} className="flex items-center gap-2 text-[13px] text-zinc-500 font-medium">
+                                  <div key={optIdx} className="flex items-center gap-2 text-[16px] text-zinc-500 font-medium">
                                     <span className="w-5 h-5 rounded-full border border-zinc-200 flex items-center justify-center shrink-0 text-[11px] font-bold">
                                       {String.fromCharCode(65 + optIdx)}
                                     </span>
@@ -501,7 +501,7 @@ export default function GeneratingPage() {
 
           {/* End of question paper marker */}
           {status === "completed" && sections.length > 0 && (
-            <div className="text-center text-[13px] font-bold text-zinc-400 mt-4 pt-4 border-t border-zinc-100 select-none">
+            <div className="text-center text-[15px] font-bold text-zinc-400 mt-4 pt-4 border-t border-zinc-100 select-none">
               End of Question Paper
             </div>
           )}
@@ -520,13 +520,13 @@ export default function GeneratingPage() {
                     if (sectionAnswers.length === 0) return null;
                     return (
                       <div key={secIdx} className="flex flex-col gap-2">
-                        <span className="text-[14px] font-bold text-zinc-700">{sec.title}</span>
+                        <span className="text-[16px] font-bold text-zinc-700">{sec.title}</span>
                         <div className="flex flex-col gap-1.5 pl-1">
                           {sec.questions.map((q) => {
                             answerNum++;
                             if (!q.answer) return null;
                             return (
-                              <div key={answerNum} className="text-[13.5px] text-zinc-600 flex items-start gap-1.5">
+                              <div key={answerNum} className="text-[16px] text-zinc-600 flex items-start gap-1.5">
                                 <span className="font-bold shrink-0">{answerNum}.</span>
                                 <span>{q.answer}</span>
                               </div>
