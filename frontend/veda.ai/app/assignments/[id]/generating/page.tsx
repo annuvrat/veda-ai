@@ -165,7 +165,7 @@ export default function GeneratingPage() {
 
     const fetchCurrentState = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/api/assignments/${id}`);
+        const res = await fetch(`${process.env.BACKEND_URL}/api/assignments/${id}`);
         if (!res.ok) return;
         const data = await res.json();
         const db = data.data || {};
@@ -201,7 +201,9 @@ export default function GeneratingPage() {
   useEffect(() => {
     if (!id) return;
 
-    const socket = io("http://localhost:3001");
+    const socket = io(process.env.BACKEND_URL || "http://localhost:3001", {
+      transports: ["websocket"],
+    });
     socketRef.current = socket;
 
     socket.on("connect", () => {
@@ -271,11 +273,12 @@ export default function GeneratingPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+console.log(process.env.BACKEND_URL);
 
   const handleDownloadPDF = () => {
     (async () => {
       try {
-        const res = await fetch(`http://localhost:3001/api/assignments/${id}/pdf`);
+        const res = await fetch(`${process.env.BACKEND_URL}/api/assignments/${id}/pdf`);
         if (!res.ok) throw new Error(`PDF fetch failed: ${res.status}`);
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
@@ -295,7 +298,7 @@ export default function GeneratingPage() {
 
   const handleRegenerate = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/api/assignments/${id}/regenerate`, { method: "POST" });
+      const res = await fetch(`${process.env.BACKEND_URL}/api/assignments/${id}/regenerate`, { method: "POST" });
       if (!res.ok) throw new Error(`Regenerate failed: ${res.status}`);
       addLog("Regeneration requested — job queued.");
       setProgress(0);

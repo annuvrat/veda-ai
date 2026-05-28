@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 
 const USER_ID = "6a1698cdb2b362a0ebad5a2f";
-const API_BASE = "http://localhost:3001/api/assignments";
+// const API_BASE = "http://localhost:3001/api/assignments";
 
 export default function Page() {
   const router = useRouter();
@@ -91,7 +91,7 @@ export default function Page() {
   const fetchAssignments = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`${API_BASE}/user/${USER_ID}?limit=100`);
+      const res = await fetch(`${process.env.BACKEND_URL}/api/assignments/user/${USER_ID}?limit=100`);
       if (res.ok) {
         const data = await res.json();
         setAssignments(data.data?.assignments || []);
@@ -119,7 +119,7 @@ export default function Page() {
 
   const handleDeleteAssignment = async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
+      const res = await fetch(`${process.env.BACKEND_URL}/api/assignments/${id}`, { method: "DELETE" });
       if (res.ok) {
         setAssignments(assignments.filter((a) => (a._id || a.id) !== id));
       }
@@ -300,7 +300,7 @@ export default function Page() {
         ]);
         const formData = new FormData();
         formData.append("file", selectedFile);
-        const uploadRes = await fetch("http://localhost:3001/api/upload", {
+        const uploadRes = await fetch(`${process.env.BACKEND_URL}/api/upload`, {
           method: "POST",
           body: formData,
         });
@@ -343,7 +343,7 @@ export default function Page() {
         totalMarks: totalMarksCount,
       };
 
-      const createRes = await fetch(API_BASE, {
+      const createRes = await fetch(`${process.env.BACKEND_URL}/api/assignments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -1079,7 +1079,7 @@ export default function Page() {
                                 onClick={async (e) => {
                                   e.stopPropagation();
                                   try {
-                                    const res = await fetch(`${API_BASE}/${cardId}`);
+                                    const res = await fetch(`${process.env.BACKEND_URL}/api/assignments/${cardId}`);
                                     if (res.ok) {
                                       const payload = await res.json();
                                       // set the fetched assignment in the global store
