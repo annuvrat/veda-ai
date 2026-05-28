@@ -97,6 +97,82 @@ VedaAI is a production-grade full-stack platform that transforms raw reference m
              │   (Mongoose)    │
              └─────────────────┘
 ```
+---
+## Design Approach — Async Worker Architecture
+
+### The Problem: Long-Running AI Inference Blocks Everything
+
+Generating a question paper is not instant. Between multimodal OCR on uploaded textbooks, two rounds of LLM inference across Gemini and Groq, and iterative per-section question generation, a single job can take **10–30 seconds** end to end.
+
+If this ran synchronously inside a request handler, the consequences would be severe:
+
+- The HTTP connection stays open for the entire duration — most proxies and clients time out well before 30 seconds
+- Every concurrent request occupies a thread/event loop slot, starving other users
+- A single LLM provider hiccup cascades into a failed request with no retry path
+- Database write pressure is uncontrolled — every in-flight request competes for the same connection pool
+
+---
+
+### The Solution: Decouple Immediately, Process Asynchronously
+Client request            Worker picks up job
+│                           │
+▼                           ▼
+┌──────────┐   job ID    ┌──────────────┐    LLM calls    ┌──────────┐
+│   API    │ ──────────▶ │    Queue     │ ──────────────▶ │  Worker  │
+│          │             │  (Redis)     │                 │          │
+└──────────┘             └──────────────┘                 └──────────┘
+│                                                          │
+│  202 Accepted                                     real-time events
+│  { jobId, status: "queued" }                      via Socket.IO
+▼                                                          │
+Client navigates                                               ▼
+to /generating/:id ◀──────────────────────────────────── Live stream
+and opens socket
+
+The API does exactly two things on `POST /api/assignments`:
+
+1. Writes a **pending** document to MongoDB with a generated assignment ID
+2. Pushes a job onto the **BullMQ queue** backed by Redis
+
+It then returns `202 Accepted` with the assignment ID — in **under 50ms**. The HTTP connection closes immediately.
+
+---
+
+### Why This Architecture Holds Up Under Load
+
+**No open connections during inference**
+
+The client disconnects after receiving the `202`. There is no dangling HTTP connection waiting for Gemini or Groq to respond. The worker operates entirely independently — if the client closes the browser, the job still completes.
+
+**Retry and resilience for free**
+
+BullMQ gives every job automatic retry with configurable exponential backoff. If Groq returns a rate-limit error mid-generation, the worker retries without any client involvement. Without a queue, a failed LLM call means a failed request — the user has to start over.
+
+**Database pressure stays controlled**
+
+Writes to MongoDB happen at two predictable moments: once on job creation (a single small document) and once on job completion (the final paper). There are no partial writes, no polling loops hammering the database for status checks, and no connection pool contention during the heavy inference phase.
+
+**The server stays available**
+
+Because the Express process delegates immediately and returns, its event loop is free to handle other requests. Concurrency is absorbed by the Redis queue and spread across however many worker processes are running — workers can be scaled horizontally without touching the API server.
+
+**Real-time feedback without polling**
+
+Rather than asking clients to poll `GET /assignments/:id` every second — which would recreate connection pressure on the API — the worker emits granular Socket.IO events directly to the client's private room as generation progresses. The client sees logs, sections, and individual questions appear in real time without issuing a single additional HTTP request.
+
+---
+
+### Trade-offs Acknowledged
+
+This architecture adds operational components — Redis and a worker process — that a simple synchronous API would not need. That is a deliberate trade. The complexity lives in infrastructure, not in application logic, and it buys:
+
+- Predictable API latency regardless of LLM response times
+- Graceful handling of slow or failing AI providers
+- A foundation that scales horizontally without architectural changes
+- A user experience — live streaming — that a synchronous design physically cannot provide
+
+Given more time, the natural extensions would be priority queues for different user tiers, dead-letter queues for permanently failed jobs with alerting, worker autoscaling tied to queue depth, and per-job progress persistence so clients can reconnect mid-stream after a disconnect.
+---
 ### End-to-End Request Flow
 
 | Step | What Happens |
@@ -275,28 +351,8 @@ Removes the assignment and its associated paper from the database.
 
 ---
 
-## 🔬 Engineering Notes
 
-### 1. Solving Stale React Closures in High-Frequency Streaming
-
-WebSocket events arrive faster than React can batch re-renders. A naive `setInterval` inside a component captures stale closure state, causing dropped or duplicated text nodes in the typewriter animation.
-
-**Solution:** Decouple mutable state (position trackers, queues, data arrays) from render triggers using a `useRef` / lightweight tick counter pattern:
-
-```typescript
-const sectionsRef = useRef<Section[]>([]);
-const queueRef    = useRef<StreamItem[]>([]);
-const [tick, setTick] = useState(0);
-
-// Mutate refs freely; bump tick to schedule a clean re-render
-const rerender = useCallback(() => setTick((t) => t + 1), []);
-```
-
-Refs are always current; `tick` simply tells React "something changed." Zero race conditions, zero dropped frames.
-
----
-
-### 2. Bulletproof Structured JSON from LLMs
+### Bulletproof Structured JSON from LLMs
 
 LLM outputs are inherently unpredictable. A malformed JSON response crashing the client is unacceptable in a production app.
 
