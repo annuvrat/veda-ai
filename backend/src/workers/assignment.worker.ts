@@ -100,11 +100,33 @@ export const assignmentWorker = new Worker(
           });
 
           const fileUrl = assignment.uploadedMaterial.fileUrl;
-          const fileResponse = await fetch(fileUrl);
-          if (!fileResponse.ok) {
-            throw new Error(`Failed to download file from URL: ${fileResponse.statusText}`);
+          let fileResponse;
+          try {
+            fileResponse = await fetch(fileUrl);
+          } catch (err: any) {
+            const msg = `Failed to fetch uploaded file: ${err.message || err}`;
+            assignment.generationLogs.push(msg);
+            await assignment.save();
+            io.to(assignmentId).emit("assignment:log", { message: msg });
+            throw new Error(msg);
           }
+
+          assignment.generationLogs.push(`Downloaded file from URL: ${fileUrl} (status=${fileResponse.status})`);
+          await assignment.save();
+          io.to(assignmentId).emit("assignment:log", { message: `Downloaded file (status ${fileResponse.status})` });
+
+          if (!fileResponse.ok) {
+            const msg = `Failed to download file from URL: ${fileResponse.status} ${fileResponse.statusText}`;
+            assignment.generationLogs.push(msg);
+            await assignment.save();
+            io.to(assignmentId).emit("assignment:log", { message: msg });
+            throw new Error(msg);
+          }
+
           const arrayBuffer = await fileResponse.arrayBuffer();
+          assignment.generationLogs.push(`Downloaded file size: ${arrayBuffer.byteLength} bytes`);
+          await assignment.save();
+          io.to(assignmentId).emit("assignment:log", { message: `Downloaded file size: ${arrayBuffer.byteLength} bytes` });
           
           let mimeType = "image/jpeg";
           const lowerUrl = fileUrl.toLowerCase();
@@ -129,35 +151,67 @@ export const assignmentWorker = new Worker(
             if (geminiApiKey) {
               const base64Data = Buffer.from(arrayBuffer).toString("base64");
               const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
-              
-              const geminiRes = await fetch(geminiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  contents: [{
-                    parts: [
-                      { inlineData: { mimeType, data: base64Data } },
-                      { text: "Analyze this uploaded document/image carefully. Extract all the textual content, key concepts, formulas, and educational reference material in full detail so it can be used to generate exam questions. Return the extracted text directly." }
-                    ]
-                  }]
-                })
-              });
+
+              assignment.generationLogs.push(`Sending file to Gemini for analysis (mime=${mimeType}, base64Length=${base64Data.length})`);
+              await assignment.save();
+              io.to(assignmentId).emit("assignment:log", { message: "Sending uploaded file to Gemini for analysis" });
+
+              let geminiRes;
+              try {
+                geminiRes = await fetch(geminiUrl, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    contents: [{
+                      parts: [
+                        { inlineData: { mimeType, data: base64Data } },
+                        { text: "Analyze this uploaded document/image carefully. Extract all the textual content, key concepts, formulas, and educational reference material in full detail so it can be used to generate exam questions. Return the extracted text directly." }
+                      ]
+                    }]
+                  }),
+                });
+              } catch (err: any) {
+                const msg = `Gemini request failed: ${err.message || err}`;
+                assignment.generationLogs.push(msg);
+                await assignment.save();
+                io.to(assignmentId).emit("assignment:log", { message: msg });
+                throw err;
+              }
+
+              assignment.generationLogs.push(`Gemini response status: ${geminiRes.status}`);
+              await assignment.save();
+              io.to(assignmentId).emit("assignment:log", { message: `Gemini response status: ${geminiRes.status}` });
 
               if (geminiRes.ok) {
                 const resJson = await geminiRes.json() as any;
+                assignment.generationLogs.push(`Gemini returned structured response. Candidates: ${resJson.candidates?.length || 0}`);
+                await assignment.save();
+                io.to(assignmentId).emit("assignment:log", { message: `Gemini returned ${resJson.candidates?.length || 0} candidates` });
+
                 const extractedText = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (extractedText) {
                   assignment.uploadedMaterial.extractedText = extractedText;
                   assignment.generationLogs.push("Successfully processed uploaded material using Gemini.");
                 } else {
+                  const raw = JSON.stringify(resJson).slice(0, 2000);
                   assignment.generationLogs.push("Warning: Gemini returned empty extraction content.");
+                  assignment.generationLogs.push(`Gemini raw response (truncated): ${raw}`);
                 }
               } else {
-                const errorBody = await geminiRes.text();
+                let errorBody = "";
+                try {
+                  errorBody = await geminiRes.text();
+                } catch (e) {
+                  errorBody = String(e);
+                }
                 assignment.generationLogs.push(`Warning: Gemini processing failed with status ${geminiRes.status}: ${errorBody}`);
+                await assignment.save();
+                io.to(assignmentId).emit("assignment:log", { message: `Gemini failed: ${geminiRes.status}` });
               }
             } else {
               assignment.generationLogs.push("Warning: Uploaded file requires Gemini API key for analysis, but GEMINI_API_KEY is not set.");
+              await assignment.save();
+              io.to(assignmentId).emit("assignment:log", { message: "GEMINI_API_KEY not set" });
             }
           }
           await assignment.save();

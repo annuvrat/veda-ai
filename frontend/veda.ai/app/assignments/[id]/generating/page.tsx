@@ -58,6 +58,7 @@ export default function GeneratingPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const paperBottomRef = useRef<HTMLDivElement>(null);
+  const paperRef = useRef<HTMLDivElement | null>(null);
 
   // ---- Streaming state kept in refs for mutation safety ----
   const sectionsRef = useRef<Section[]>([]);
@@ -269,7 +270,38 @@ export default function GeneratingPage() {
   }, [id]);
 
   const handleDownloadPDF = () => {
-    alert("Compiling & downloading PDF…");
+    (async () => {
+      try {
+        const res = await fetch(`http://localhost:3001/api/assignments/${id}/pdf`);
+        if (!res.ok) throw new Error(`PDF fetch failed: ${res.status}`);
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${(assignment?.title || "assignment").replace(/[^a-z0-9\-\_ ]/gi, "_")}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error("Server PDF download failed:", err);
+        alert("Failed to download PDF. See console for details.");
+      }
+    })();
+  };
+
+  const handleRegenerate = async () => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/assignments/${id}/regenerate`, { method: "POST" });
+      if (!res.ok) throw new Error(`Regenerate failed: ${res.status}`);
+      addLog("Regeneration requested — job queued.");
+      setProgress(0);
+      useAssignmentStore.setState({ status: "queued" });
+      alert("Regeneration queued. The job will begin shortly.");
+    } catch (err) {
+      console.error("Regenerate error:", err);
+      alert("Failed to queue regeneration. See console for details.");
+    }
   };
 
   // ---- Derived render data from refs (re-read on every tick) ----
@@ -384,15 +416,20 @@ export default function GeneratingPage() {
                 Certainly, James! Here are customized Question Paper for your CBSE Grade 8 Science classes on the NCERT chapters:
               </span>
             </div>
-            <button onClick={handleDownloadPDF} className="bg-white hover:bg-zinc-100 text-black px-6 py-2.5 rounded-full font-bold text-[14px] flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all select-none self-start sm:self-auto shrink-0">
+            <div className="flex gap-3">
+              <button onClick={handleRegenerate} className="bg-[#FF7950] hover:bg-[#FF6f3a] text-white px-4 py-2.5 rounded-full font-bold text-[14px] flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all select-none">
+                Regenerate
+              </button>
+              <button onClick={handleDownloadPDF} className="bg-white hover:bg-zinc-100 text-black px-6 py-2.5 rounded-full font-bold text-[14px] flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all select-none self-start sm:self-auto shrink-0">
               <Download className="w-4 h-4 text-black" />
               Download as PDF
-            </button>
+              </button>
+            </div>
           </div>
         )}
 
         {/* ==================== THE EXAM SHEET ==================== */}
-        <div className="bg-white rounded-3xl border border-zinc-100 shadow-lg p-10 flex flex-col gap-6 relative flex-1">
+        <div ref={paperRef} className="bg-white rounded-3xl border border-zinc-100 shadow-lg p-10 flex flex-col gap-6 relative flex-1">
 
           {/* Paper header – ALWAYS VISIBLE (static school template) */}
           <div className="flex flex-col items-center text-center border-b border-zinc-200 pb-5 leading-normal select-none">

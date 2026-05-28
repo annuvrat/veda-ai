@@ -584,6 +584,25 @@ export default function Page() {
                     />
                   </div>
 
+                  {/* If user uploaded a file, show a processing image/message since analysis may take longer */}
+                  {(uploadedMaterial || selectedFile) && (
+                    <div className="flex items-center gap-4 pt-3">
+                      <img
+                        src="/vercel.png"
+                        alt="Processing uploaded material"
+                        className="w-20 h-20 object-contain rounded-md bg-white/5 p-2"
+                      />
+                      <div className="text-zinc-300">
+                        <div className="font-semibold text-white text-[15px]">
+                          Processing uploaded file
+                        </div>
+                        <div className="text-zinc-400 text-[13px]">
+                          This may take a few minutes. You can leave this page — we'll process in background.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="bg-[#121212] rounded-xl p-4 font-mono text-[12.5px] leading-relaxed max-h-56 overflow-y-auto flex flex-col gap-1.5 border border-zinc-800/50">
                     {generationLogs.map((log, idx) => (
                       <div key={idx} className="flex gap-2">
