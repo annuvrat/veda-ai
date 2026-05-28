@@ -153,6 +153,7 @@ It then returns `202 Accepted` with the assignment ID — in **under 50ms**. The
 ---
 
 ### Why This Architecture Holds Up Under Load
+---
 
 **No open connections during inference**
 
@@ -177,6 +178,7 @@ Rather than asking clients to poll `GET /assignments/:id` every second — which
 **Blazing Fast Text-Only Generation**
 
 When generating assignments without images (pure text instructions only), the pipeline bypasses Gemini entirely and moves directly to Groq structured generation. In this fast path, complete papers stream back to the client in 1–2 seconds — no perceptible delay.
+
 ---
 
 ### Trade-offs Acknowledged
@@ -190,6 +192,7 @@ This architecture adds operational components — Redis and a worker process —
 - A user experience — live streaming — that a synchronous design physically cannot provide
 
 Given more time, the natural extensions would be priority queues for different user tiers, dead-letter queues for permanently failed jobs with alerting, worker autoscaling tied to queue depth, and per-job progress persistence so clients can reconnect mid-stream after a disconnect.
+
 ---
 ### End-to-End Request Flow
 
