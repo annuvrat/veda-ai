@@ -44,39 +44,19 @@ VedaAI is a production-grade full-stack platform that transforms raw reference m
 ## 🏗 Architecture
 
 VedaAI uses a decoupled three-tier architecture: a Next.js frontend, an Express API server, and a background worker tier that handles all AI inference asynchronously.
+---
+### Request flow
 
-```mermaid
-graph TD
-    subgraph Frontend ["Client Tier (Next.js & Zustand)"]
-        UI["Create Assignment View"]
-        LivePage["Live Exam Sheet View"]
-    end
-
-    subgraph Backend ["Server Tier (Node.js & Express)"]
-        REST["Express API Server"]
-        Queue["BullMQ (Redis Broker)"]
-        DB[("MongoDB (Mongoose)")]
-        Worker["BullMQ Worker Process"]
-        WS["Socket.IO Server"]
-    end
-
-    subgraph AI ["AI & Multimodal Services"]
-        Gemini["Gemini 2.5 Flash\n(OCR & Concept Extraction)"]
-        Groq["Groq Llama 3.3 70B\n(Structured Generation)"]
-    end
-
-    UI -->|"1. POST /api/assignments"| REST
-    UI -->|"2. Join Socket Room"| WS
-    REST -->|"Register Pending Paper"| DB
-    REST -->|"Enqueue Job"| Queue
-    Worker -->|"Pick up Job"| Queue
-    Worker -->|"3. OCR & Distillation"| Gemini
-    Worker -->|"4–5. Section & Question Gen"| Groq
-    Worker -->|"6. Emit Progress Events"| WS
-    WS -->|"7. Stream Logs, Sections, Questions"| LivePage
-    Worker -->|"8. Save Finalized Paper"| DB
-```
-
+| Step | Actor | Action |
+|------|-------|--------|
+| ① | Create Assignment View | `POST /api/assignments` with config + file |
+| ② | Create Assignment View | Joins a private Socket.IO room keyed to the assignment ID |
+| ③ | BullMQ Worker | Picks up the enqueued job from Redis |
+| ④ | Worker → Gemini 2.5 Flash | Streams the file for OCR and concept distillation |
+| ⑤ | Worker → Groq Llama 3.3 | Generates sections, then fills each with questions |
+| ⑥ | Worker → Socket.IO | Emits granular progress events (logs, sections, questions) |
+| ⑦ | Socket.IO → Live Exam View | Streams events to the client; typewriter animation renders them |
+| ⑧ | Worker → MongoDB | Persists the finalized paper; closes the socket room |
 ### End-to-End Request Flow
 
 | Step | What Happens |
