@@ -93,4 +93,18 @@ export const deleteAssignment = async (req: Request, res: Response) => {
     throw error;
   }
 };
+
+export const getAssignment = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const assignment = await Assignment.findById(id).populate("generatedPaperId");
+    if (!assignment) {
+      throw ApiError.notFound("Assignment not found");
+    }
+    return ApiResponse.ok(assignment, "Assignment details fetched successfully").send(res);
+  } catch (error: any) {
+    console.error(error);
+    throw error;
+  }
+};
   
