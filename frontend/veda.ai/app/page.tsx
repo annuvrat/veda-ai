@@ -41,6 +41,7 @@ export default function Page() {
     assignments,
     setAssignments,
     addAssignment,
+    setAssignment,
   } = useAssignmentStore();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -1046,8 +1047,22 @@ export default function Page() {
                           {isMenuOpen && (
                             <div className="absolute right-0 mt-1 w-40 bg-white border border-zinc-100 rounded-xl shadow-lg py-1.5 z-50">
                               <button
-                                onClick={(e) => {
+                                onClick={async (e) => {
                                   e.stopPropagation();
+                                  try {
+                                    const res = await fetch(`${API_BASE}/${cardId}`);
+                                    if (res.ok) {
+                                      const payload = await res.json();
+                                      // set the fetched assignment in the global store
+                                      setAssignment(payload.data || payload || null);
+                                    } else {
+                                      console.error("Failed to fetch assignment:", res.status);
+                                      setAssignment(null);
+                                    }
+                                  } catch (err) {
+                                    console.error("Error fetching assignment:", err);
+                                    setAssignment(null);
+                                  }
                                   router.push(`/assignments/${cardId}/generating`);
                                   setActiveDropdownCardId(null);
                                 }}
