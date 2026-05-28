@@ -18,6 +18,7 @@ import {
   Home,
   Users,
   Book,
+  Library,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -276,12 +277,12 @@ export default function GeneratingPage() {
   const typingPos = typingPosRef.current;
 
   return (
-    <div className="flex min-h-screen bg-[#F3F4F6] p-4 gap-6 font-sans overflow-hidden">
+    <div className="flex min-h-screen bg-[#e2e3e4] p-4 gap-6 font-sans overflow-hidden">
       {/* ==================== LEFT SIDEBAR ==================== */}
-      <aside className="w-82 bg-white rounded-3xl shadow-xs border border-zinc-100 flex flex-col justify-between p-6 shrink-0 select-none">
+      <aside className="w-82 bg-white rounded-3xl shadow-2xl border border-zinc-100 flex flex-col justify-between p-6 shrink-0 select-none">
         <div className="flex flex-col gap-8">
-          <div className="flex items-center -ml-5">
-            <img src="/logo 2.png" alt="VedaAI" className="mt-6 w-24 h-22 object-contain" />
+          <div className="flex items-center -ml-5 -mt-6 ">
+            <img src="/logo 2.png" alt="VedaAI" className="mt-6 w-24 h-22  object-contain" />
             <span className="-ml-4 text-3xl font-bold tracking-tight text-zinc-900" style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}>
               VedaAI
             </span>
@@ -300,6 +301,7 @@ export default function GeneratingPage() {
               { icon: Users, label: "My Groups" },
               { icon: FileText, label: "Assignments", active: true },
               { icon: Book, label: "AI Teacher's Toolkit" },
+              { icon: Library, label: "My Library"},
             ].map((n) => (
               <button key={n.label} onClick={() => { resetGeneration(); router.push("/"); }}
                 className={`w-full flex items-center gap-4 py-3 px-4 rounded-xl text-left text-[16px] font-medium transition-all cursor-pointer ${n.active ? "bg-[#EFEFEF] text-zinc-900 shadow-2xs font-semibold" : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"}`}>
