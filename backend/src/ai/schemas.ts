@@ -15,7 +15,7 @@ export const QuestionSchema = z.object({
 
   answer: z.string(),
 
-  options: z.array(z.string()).optional(),
+  options: z.array(z.string()).nullable().optional(),
 });
 
 export const SectionSchema = z.object({
