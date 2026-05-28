@@ -101,6 +101,7 @@ If this ran synchronously inside a request handler, the consequences would be se
 ---
 
 ### The Solution: Decouple Immediately, Process Asynchronously
+```
 ┌─────────┐                    ┌─────────┐                    ┌─────────┐
 │ Client  │                    │   API   │                    │ Queue   │
 └────┬────┘                    └────┬────┘                    │ (Redis) │
@@ -140,7 +141,7 @@ If this ran synchronously inside a request handler, the consequences would be se
      │                              │                              │
      │                              │  Confirmation               │
      │                              │◀─────────────────────────────│
-
+```
  ---
 The API does exactly two things on `POST /api/assignments`:
 
