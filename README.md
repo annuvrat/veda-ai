@@ -41,22 +41,62 @@ VedaAI is a production-grade full-stack platform that transforms raw reference m
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
-VedaAI uses a decoupled three-tier architecture: a Next.js frontend, an Express API server, and a background worker tier that handles all AI inference asynchronously.
----
-### Request flow
-
-| Step | Actor | Action |
-|------|-------|--------|
-| ① | Create Assignment View | `POST /api/assignments` with config + file |
-| ② | Create Assignment View | Joins a private Socket.IO room keyed to the assignment ID |
-| ③ | BullMQ Worker | Picks up the enqueued job from Redis |
-| ④ | Worker → Gemini 2.5 Flash | Streams the file for OCR and concept distillation |
-| ⑤ | Worker → Groq Llama 3.3 | Generates sections, then fills each with questions |
-| ⑥ | Worker → Socket.IO | Emits granular progress events (logs, sections, questions) |
-| ⑦ | Socket.IO → Live Exam View | Streams events to the client; typewriter animation renders them |
-| ⑧ | Worker → MongoDB | Persists the finalized paper; closes the socket room |
+```
+┌──────────────────────────────────────────────────┐
+│                   CLIENT TIER                    │
+│          Next.js 16 · Zustand · Tailwind         │
+│                                                  │
+│  ┌─────────────────────┐  ┌─────────────────┐   │
+│  │ Create Assignment   │  │ Live Exam Sheet │   │
+│  │ View                │  │ View            │   │
+└──┴──────────┬──────────┴──┴────────▲────────┴───┘
+              │ ① POST /api/assignments│ ⑦ stream events
+              │ ② join socket room     │
+              ▼                        │
+┌─────────────────────┐   ┌───────────┴──────────┐
+│   Express API       │   │      Socket.IO        │
+│   (REST endpoints)  │   │   (event emitter)     │
+└──────┬──────────────┘   └──────────▲────────────┘
+       │                             │ ⑥ emit progress
+       │ enqueue job                 │
+       ▼                             │
+┌─────────────────────┐             │
+│  BullMQ + Redis     │             │
+│  (async job queue)  │             │
+└──────┬──────────────┘             │
+       │ ③ job dequeued             │
+       ▼                             │
+┌──────────────────────────────────────────────────┐
+│                  WORKER TIER                     │
+│           Isolated BullMQ process                │
+│                                                  │
+│            ┌──────────────────┐                 │
+│            │   BullMQ Worker  │─────────────────┘
+│            │  Fetch · Parse · │
+│            │  Generate · Emit │
+│            └────────┬─────────┘
+└─────────────────────│────────────────────────────┘
+                      │
+          ┌───────────┴────────────┐
+          │ ④ OCR & distill        │ ⑤ structured gen
+          ▼                        ▼
+┌──────────────────┐    ┌──────────────────────┐
+│  Gemini 2.5      │    │  Groq Llama 3.3 70B  │
+│  Flash           │    │                      │
+│  (OCR · concept  │    │  (sections · MCQs ·  │
+│   extraction)    │    │   questions)         │
+└──────────────────┘    └──────────────────────┘
+          │                        │
+          └───────────┬────────────┘
+                      │ ⑧ save finalized paper
+                      ▼
+             ┌─────────────────┐
+             │    MongoDB      │
+             │   (Mongoose)    │
+             └─────────────────┘
+```
 ### End-to-End Request Flow
 
 | Step | What Happens |
