@@ -26,6 +26,7 @@ import {
   MicOff,
   CheckCircle2,
   AlertCircle,
+  Menu,
 } from "lucide-react";
 
 const USER_ID = "6a1698cdb2b362a0ebad5a2f";
@@ -50,6 +51,7 @@ export default function Page() {
   const [activeDropdownCardId, setActiveDropdownCardId] = useState<
     string | null
   >(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // ── CREATE FORM STATE ──
   const [dueDate, setDueDate] = useState("");
@@ -371,9 +373,9 @@ export default function Page() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex min-h-screen bg-[#e2e3e4] p-4 gap-6 font-sans overflow-hidden">
-      {/* ══════════════════════ SIDEBAR ══════════════════════ */}
-      <aside className="w-82 bg-white rounded-3xl shadow-2xl border border-zinc-100 flex flex-col justify-between p-6 shrink-0 select-none">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#e2e3e4] p-4 gap-6 font-sans overflow-hidden">
+      {/* ══════════════════════ SIDEBAR (hidden on mobile) ══════════════════════ */}
+      <aside className="hidden md:flex md:w-82 bg-white rounded-3xl shadow-2xl border border-zinc-100 flex-col justify-between p-6 shrink-0 select-none">
         <div className="flex flex-col gap-8">
           {/* Logo */}
           <div className="flex items-center -ml-5 -mt-6">
@@ -469,7 +471,7 @@ export default function Page() {
       </aside>
 
       {/* ══════════════════════ MAIN ══════════════════════ */}
-      <main className="flex-1 flex flex-col gap-6 relative h-[calc(100vh-2rem)] overflow-y-auto pr-2">
+      <main className="flex-1 flex flex-col gap-6 relative md:h-[calc(100vh-2rem)] h-auto overflow-y-auto pr-2">
         {/* Header */}
         <header className="bg-white rounded-2xl border border-zinc-100/50 p-2 flex items-center justify-between shadow-xs shrink-0">
           <div className="flex items-center gap-3.5">
@@ -494,6 +496,14 @@ export default function Page() {
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#e04f2f] rounded-full ring-2 ring-white" />
             </button>
 
+            {/* Hamburger menu for mobile */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+              className="md:hidden p-2 hover:bg-zinc-50 rounded-lg active:scale-95 transition-all text-zinc-600 cursor-pointer"
+            >
+              <Menu className="w-7 h-7" />
+            </button>
+
             {/* User dropdown — stopPropagation so global click doesn't immediately close it */}
             <div className="relative">
               <button
@@ -510,7 +520,7 @@ export default function Page() {
                     className="w-10 h-10"
                   />
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="hidden sm:flex items-center gap-1.5">
                   <span className="text-[18px] font-semibold text-zinc-700 select-none">
                     James Bond
                   </span>
@@ -1002,7 +1012,7 @@ export default function Page() {
                 <Filter className="w-5 h-5 text-zinc-400" />
                 <span>Filter By</span>
               </div>
-              <div className="relative w-80">
+              <div className="relative w-full md:w-80">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                 <input
                   type="text"
@@ -1131,7 +1141,7 @@ export default function Page() {
 
             {/* ── Glassmorphic bottom fade ── */}
             <div
-              className="fixed pointer-events-none z-30"
+              className="hidden md:block fixed pointer-events-none z-30"
               style={{
                 // aligns to right edge of main, accounting for sidebar + gap
                 bottom: 0,
@@ -1150,7 +1160,7 @@ export default function Page() {
             />
 
             {/* Floating Create button */}
-            <div className="fixed bottom-8 left-[58%] -translate-x-1/2 z-40">
+            <div className="fixed bottom-8 left-1/2 md:left-[58%] -translate-x-1/2 z-40">
               <button
                 onClick={() => setCreateModalOpen(true)}
                 className="bg-[#121212] hover:bg-[#252525] text-white py-3.5 px-8 rounded-full font-bold flex items-center gap-2.5 shadow-2xl hover:shadow-3xl active:scale-95 hover:-translate-y-0.5 transition-all duration-200 text-[15px] select-none border border-white/10 cursor-pointer"
@@ -1162,6 +1172,120 @@ export default function Page() {
           </section>
         )}
       </main>
+
+      {/* ══════════════════════ MOBILE SIDEBAR DRAWER ══════════════════════ */}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+      <div
+        className={`fixed left-0 top-0 bottom-0 w-72 bg-white rounded-r-3xl shadow-2xl border-r border-zinc-100 flex flex-col justify-between p-6 z-50 transition-transform duration-300 md:hidden ${
+          isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex flex-col gap-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center -ml-5">
+              <img
+                src="/logo 2.png"
+                alt="VedaAI Logo"
+                className="w-16 h-14 object-contain"
+              />
+              <span
+                className="-ml-2 text-2xl font-bold tracking-tight text-zinc-900"
+                style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}
+              >
+                VedaAI
+              </span>
+            </div>
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="p-2 hover:bg-zinc-50 rounded-lg text-zinc-600 cursor-pointer"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div className="w-full rounded-full p-[3.5px] bg-gradient-to-t from-[#C0350A] to-[#FF7950] shadow-sm hover:shadow-md transition-all duration-200">
+            <button
+              onClick={() => {
+                setCreateModalOpen(true);
+                setIsMobileSidebarOpen(false);
+              }}
+              className="w-full bg-[#1E1E1E] text-white py-3 px-5 rounded-full font-medium flex items-center justify-center gap-2.5 hover:bg-[#252525] active:scale-98 transition-all duration-200 group relative overflow-hidden cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-white fill-white group-hover:animate-pulse" />
+              <span className="text-[16px]">Create Assignment</span>
+            </button>
+          </div>
+
+          <nav className="mt-8 flex flex-col gap-1.5">
+            {[
+              { id: "Home", label: "Home", icon: Home },
+              { id: "My Groups", label: "My Groups", icon: Users },
+              { id: "Assignments", label: "Assignments", icon: FileText },
+              { id: "AI Teacher's Toolkit", label: "AI Teacher's Toolkit", icon: Book },
+              { id: "My Library", label: "My Library", icon: Library },
+            ].map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id && !isCreateModalOpen;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setCreateModalOpen(false);
+                    setActiveTab(item.id);
+                    setIsMobileSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-4 py-3 px-4 rounded-xl text-left text-[16px] font-medium transition-all duration-200 cursor-pointer ${isActive
+                      ? "bg-[#EFEFEF] text-zinc-900 font-semibold"
+                      : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
+                    }`}
+                >
+                  <Icon
+                    className={`w-5 h-5 ${isActive ? "text-zinc-900 scale-110" : "text-zinc-400"
+                      }`}
+                  />
+                  <span className="flex-1">{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={() => {
+              setCreateModalOpen(false);
+              setActiveTab("Settings");
+              setIsMobileSidebarOpen(false);
+            }}
+            className="flex items-center gap-4 py-2.5 px-4 rounded-xl text-[17px] font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 transition-all duration-200 text-left w-full cursor-pointer"
+          >
+            <Settings className="w-7 h-7 text-zinc-400" />
+            Settings
+          </button>
+          <div className="bg-[#EFEFEF] p-4 rounded-2xl flex items-center gap-3.5 border border-zinc-100/50">
+            <div className="w-14 h-14 rounded-full bg-[#fcd34d] overflow-hidden flex items-center justify-center border-2 border-white shrink-0">
+              <img
+                src="https://api.dicebear.com/7.x/adventurer/svg?seed=john"
+                alt="School logo"
+                className="w-9 h-9"
+              />
+            </div>
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-[15px] font-bold text-zinc-800 truncate leading-tight">
+                Delhi Public School
+              </span>
+              <span className="text-[14px] text-zinc-500 truncate leading-none mt-0.5">
+                Bokaro Steel City
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

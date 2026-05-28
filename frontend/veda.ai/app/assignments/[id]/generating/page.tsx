@@ -19,6 +19,8 @@ import {
   Users,
   Book,
   Library,
+  Menu,
+  X,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -59,6 +61,7 @@ export default function GeneratingPage() {
   const socketRef = useRef<Socket | null>(null);
   const paperBottomRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement | null>(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // ---- Streaming state kept in refs for mutation safety ----
   const sectionsRef = useRef<Section[]>([]);
@@ -309,9 +312,9 @@ export default function GeneratingPage() {
   const typingPos = typingPosRef.current;
 
   return (
-    <div className="flex min-h-screen bg-[#e2e3e4] p-4 gap-6 font-sans overflow-hidden">
-      {/* ==================== LEFT SIDEBAR ==================== */}
-      <aside className="w-82 bg-white rounded-3xl shadow-2xl border border-zinc-100 flex flex-col justify-between p-6 shrink-0 select-none">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#e2e3e4] p-4 gap-6 font-sans overflow-hidden">
+      {/* ==================== LEFT SIDEBAR (hidden on mobile) ==================== */}
+      <aside className="hidden md:flex md:w-82 bg-white rounded-3xl shadow-2xl border border-zinc-100 flex-col justify-between p-6 shrink-0 select-none">
         <div className="flex flex-col gap-8">
           <div className="flex items-center -ml-5 -mt-6 ">
             <img src="/logo 2.png" alt="VedaAI" className="mt-6 w-24 h-22  object-contain" />
@@ -362,7 +365,7 @@ export default function GeneratingPage() {
       </aside>
 
       {/* ==================== MAIN CONTENT ==================== */}
-      <main className="flex-1 flex flex-col gap-4 relative h-[calc(100vh-2rem)] overflow-y-auto">
+      <main className="flex-1 flex flex-col gap-4 relative md:h-[calc(100vh-2rem)] h-auto overflow-y-auto">
         {/* Header */}
         <header className="bg-white rounded-2xl border border-zinc-100/50 p-2 flex items-center justify-between shadow-xs shrink-0">
           <div className="flex items-center gap-3.5">
@@ -380,12 +383,23 @@ export default function GeneratingPage() {
               <Bell className="w-7 h-7" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#e04f2f] rounded-full ring-2 ring-white" />
             </button>
+
+            {/* Hamburger menu for mobile */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+              className="md:hidden p-2 hover:bg-zinc-50 rounded-lg active:scale-95 transition-all text-zinc-600 cursor-pointer"
+            >
+              <Menu className="w-7 h-7" />
+            </button>
+
             <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-3 hover:bg-zinc-50 py-1.5 px-3 rounded-full transition-all cursor-pointer">
               <div className="w-10 h-10 rounded-full bg-[#f87171] overflow-hidden flex items-center justify-center border border-zinc-200">
                 <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=john" alt="User" className="w-10 h-10" />
               </div>
-              <span className="text-[18px] font-semibold text-zinc-700 select-none">James Bond</span>
-              <ChevronDown className="w-4 h-4 text-zinc-400" />
+              <div className="hidden sm:flex items-center gap-1.5">
+                <span className="text-[18px] font-semibold text-zinc-700 select-none">James Bond</span>
+                <ChevronDown className="w-4 h-4 text-zinc-400" />
+              </div>
             </button>
           </div>
         </header>
@@ -429,7 +443,7 @@ export default function GeneratingPage() {
         )}
 
         {/* ==================== THE EXAM SHEET ==================== */}
-        <div ref={paperRef} className="bg-white rounded-3xl border border-zinc-100 shadow-lg p-10 flex flex-col gap-6 relative flex-1">
+        <div ref={paperRef} className="bg-white rounded-3xl border border-zinc-100 shadow-lg p-6 md:p-10 flex flex-col gap-6 relative flex-1">
 
           {/* Paper header – ALWAYS VISIBLE (static school template) */}
           <div className="flex flex-col items-center text-center border-b border-zinc-200 pb-5 leading-normal select-none">
@@ -582,6 +596,96 @@ export default function GeneratingPage() {
           <div ref={paperBottomRef} />
         </div>
       </main>
+
+      {/* ══════════════════════ MOBILE SIDEBAR DRAWER ══════════════════════ */}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+      <div
+        className={`fixed left-0 top-0 bottom-0 w-72 bg-white rounded-r-3xl shadow-2xl border-r border-zinc-100 flex flex-col justify-between p-6 z-50 transition-transform duration-300 md:hidden ${
+          isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex flex-col gap-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center -ml-5">
+              <img
+                src="/logo 2.png"
+                alt="VedaAI Logo"
+                className="w-16 h-14 object-contain"
+              />
+              <span
+                className="-ml-2 text-2xl font-bold tracking-tight text-zinc-900"
+                style={{ fontFamily: '"Bricolage Grotesque", sans-serif' }}
+              >
+                VedaAI
+              </span>
+            </div>
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="p-2 hover:bg-zinc-50 rounded-lg text-zinc-600 cursor-pointer"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <nav className="mt-2 flex flex-col gap-1.5">
+            {[
+              { id: "Home", label: "Home", icon: Home },
+              { id: "My Groups", label: "My Groups", icon: Users },
+              { id: "Assignments", label: "Assignments", icon: FileText },
+              { id: "AI Teacher's Toolkit", label: "AI Teacher's Toolkit", icon: Book },
+              { id: "My Library", label: "My Library", icon: Library },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setIsMobileSidebarOpen(false);
+                  }}
+                  className="w-full flex items-center gap-4 py-3 px-4 rounded-xl text-left text-[16px] font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 transition-all duration-200 cursor-pointer"
+                >
+                  <Icon className="w-5 h-5 text-zinc-400" />
+                  <span className="flex-1">{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={() => {
+              setIsMobileSidebarOpen(false);
+            }}
+            className="flex items-center gap-4 py-2.5 px-4 rounded-xl text-[17px] font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 transition-all duration-200 text-left w-full cursor-pointer"
+          >
+            <Settings className="w-7 h-7 text-zinc-400" />
+            Settings
+          </button>
+          <div className="bg-[#EFEFEF] p-4 rounded-2xl flex items-center gap-3.5 border border-zinc-100/50">
+            <div className="w-14 h-14 rounded-full bg-[#fcd34d] overflow-hidden flex items-center justify-center border-2 border-white shrink-0">
+              <img
+                src="https://api.dicebear.com/7.x/adventurer/svg?seed=john"
+                alt="School logo"
+                className="w-9 h-9"
+              />
+            </div>
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-[15px] font-bold text-zinc-800 truncate leading-tight">
+                Delhi Public School
+              </span>
+              <span className="text-[14px] text-zinc-500 truncate leading-none mt-0.5">
+                Bokaro Steel City
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
