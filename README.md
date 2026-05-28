@@ -174,12 +174,13 @@ Because the Express process delegates immediately and returns, its event loop is
 
 Rather than asking clients to poll `GET /assignments/:id` every second — which would recreate connection pressure on the API — the worker emits granular Socket.IO events directly to the client's private room as generation progresses. The client sees logs, sections, and individual questions appear in real time without issuing a single additional HTTP request.
 
-### 4. Blazing Fast Text-Only Generation
+**Blazing Fast Text-Only Generation**
 
-When generating assignments **without images** (pure text instructions only), the pipeline bypasses Gemini entirely and moves directly to Groq structured generation. In this fast path, complete papers stream back to the client in **1–2 seconds** — no perceptible delay.
+When generating assignments without images (pure text instructions only), the pipeline bypasses Gemini entirely and moves directly to Groq structured generation. In this fast path, complete papers stream back to the client in 1–2 seconds — no perceptible delay.
 ---
 
 ### Trade-offs Acknowledged
+---
 
 This architecture adds operational components — Redis and a worker process — that a simple synchronous API would not need. That is a deliberate trade. The complexity lives in infrastructure, not in application logic, and it buys:
 
